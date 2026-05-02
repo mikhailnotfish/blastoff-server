@@ -9,7 +9,7 @@ const io     = new Server(server, {
 });
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const ADMIN_PASSWORD = 'CHANGE_THIS_PASSWORD';  // <-- change before deploying!
+const ADMIN_PASSWORD = '1337';  // <-- change before deploying!
 const MAX_NAME_LEN   = 20;
 const TICK_MS        = 50;  // position broadcast interval (20/s)
 
