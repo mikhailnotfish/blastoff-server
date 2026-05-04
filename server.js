@@ -9,7 +9,7 @@ const io     = new Server(server, {
 });
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const ADMIN_PASSWORD = '1337';  // <-- change before deploying!
+const ADMIN_PASSWORD = '1337';  // matches AP_CODE in the client
 const MAX_NAME_LEN   = 20;
 const TICK_MS        = 50;  // position broadcast interval (20/s)
 
@@ -62,6 +62,12 @@ io.on('connection', socket => {
   socket.on('setName', raw => {
     if (!players[socket.id]) return;
     players[socket.id].name = sanitiseName(raw);
+    // Auto-grant admin to Mikhail
+    if (players[socket.id].name.toLowerCase() === 'mikhail') {
+      players[socket.id].isAdmin = true;
+      socket.emit('adminGranted');
+      console.log(`[ADMIN] Auto-granted admin to ${players[socket.id].name}`);
+    }
     io.emit('playerUpdated', { id: socket.id, name: players[socket.id].name });
     broadcastPlayerList();
   });
@@ -150,6 +156,22 @@ io.on('connection', socket => {
       target.emit('flung', { vx:(Math.random()-0.5)*30, vy:40, vz:(Math.random()-0.5)*30 });
       socket.emit('adminSuccess', `Flung ${targetPlayer.name}`);
     }
+  });
+
+  // ── CHAT ─────────────────────────────────────────────────────────────────────
+  socket.on('chatMsg', data => {
+    if (!players[socket.id]) return;
+    const sender = players[socket.id];
+    const text = String(data.text || '').substring(0, 120).replace(/</g,'&lt;').replace(/>/g,'&gt;').trim();
+    if (!text) return;
+    console.log(`[CHAT] ${sender.name}: ${text}`);
+    // Broadcast to everyone except sender (sender already shows it locally)
+    socket.broadcast.emit('chatMsg', {
+      id:      socket.id,
+      name:    sender.name,
+      text:    text,
+      isAdmin: sender.isAdmin
+    });
   });
 
   // ── DISCONNECT ───────────────────────────────────────────────────────────────
